@@ -1,0 +1,26 @@
+[project]
+name = "ansible-camp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ansible-core>=2.21.2",
+    "ansible-runner>=2.4.3",
+    "fastapi>=0.141.1",
+    "pydantic>=2.13.4",
+    "pymysql>=1.2.0",
+    "requests>=2.34.2",
+    "sqlalchemy>=2.0.51",
+    "uvicorn>=0.52.1",
+]
+
+[project.scripts]
+ansible-camp = "ansible_camp:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+#[tool.ruff.lint.flake8-bugbear]
+#extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]

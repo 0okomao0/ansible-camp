@@ -1,0 +1,12 @@
+- hosts: dev
+  become: no
+  gather_facts: no
+  tasks:
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
+    - shell: ping 127.0.0.1 -c 10
