@@ -1,4 +1,5 @@
 ## How To Start devServer
 ```
-uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+source /workspace/.venv/bin/activate
+uv run uvicorn app.main:app --reload
 ```

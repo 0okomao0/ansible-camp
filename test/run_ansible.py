@@ -1,7 +1,7 @@
 import os
 import shutil
 import uuid
-
+import subprocess
 import ansible_runner
 import requests
 import yaml
@@ -50,8 +50,7 @@ def on_ansible_event(event: dict):
 
         send_event_to_api(payload)
 
-def run_playbook():
-    print(f"{JOB_ID=}")
+def runner_exec():
     res = requests.get(f"{API_BASE_URL}/api/v1/inventory")
     inventory_yaml = yaml.dump(res.json())
 
@@ -64,10 +63,10 @@ def run_playbook():
             private_data_dir="test/runner_files",
             playbook="ping.yml",
             inventory=inventory_yaml,
-            verbosity=3,
+            # verbosity=3,
             process_isolation=True,
             process_isolation_executable="docker",
-            container_image="quay.io/ansible/creator-ee:latest",
+            container_image="test-ee:v1.0",
             event_handler=on_ansible_event,
         )
 
@@ -75,7 +74,7 @@ def run_playbook():
             {
                 "job_id": JOB_ID,
                 "event_type": "job_finished",
-                "status": r.status,  # "successful" や "failed"
+                "status": r.status,
             }
         )
 
@@ -83,6 +82,29 @@ def run_playbook():
         if os.path.isdir("test/inventory"):
             shutil.rmtree("test/inventory")
 
+def builder_exec():
+    command = [
+        "ansible-builder", "build",
+        "--tag", "test-ee:v1.0",
+        "--file", "test/builder_files/execution-environment.yml"
+    ]
+    send_event_to_api(
+        {"job_id": JOB_ID, "event_type": "job_prepare_started", "status": "PREPARING"}
+    )
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    if result.returncode == 0:
+        send_event_to_api(
+            {"job_id": JOB_ID, "event_type": "job_prepare_finished", "status": "PREPARED", "stdout": result.stdout, "stderr": result.stderr}
+        )
+    else:
+        send_event_to_api(
+            {"job_id": JOB_ID, "event_type": "job_prepare_finished", "status": "FAILED", "stdout": result.stdout, "stderr": result.stderr}
+        )
+    return result.returncode
+
 
 if __name__ == "__main__":
-    run_playbook()
+    print(f"{JOB_ID=}")
+    builder_rc = builder_exec()
+    if builder_rc == 0:
+        runner_exec()

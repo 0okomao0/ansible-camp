@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ansible-builder>=3.1.1",
     "ansible-core>=2.21.2",
     "ansible-runner>=2.4.3",
     "fastapi>=0.141.1",
@@ -15,12 +16,5 @@ dependencies = [
     "uvicorn>=0.52.1",
 ]
 
-[project.scripts]
-ansible-camp = "ansible_camp:main"
-
-[build-system]
-requires = ["uv_build>=0.12.3,<0.13.0"]
-build-backend = "uv_build"
-
-#[tool.ruff.lint.flake8-bugbear]
-#extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+[tool.uv]
+package = false
