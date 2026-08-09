@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import relationship
 
@@ -53,3 +53,11 @@ class JobEventModel(Base):
         DATETIME(fsp=6), default=lambda: datetime.datetime.now(datetime.UTC)
     )
     job = relationship("JobModel", back_populates="events")
+
+class CMDBModel(Base):
+    __tablename__ = "cmdb_define"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    rest_name = Column(String(100), nullable=False)
+    table_name = Column(String(100), nullable=False)
+    columns = Column(JSON, nullable=False)

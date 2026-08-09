@@ -1,7 +1,7 @@
 import datetime
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 # DEFINE HOST
@@ -71,3 +71,29 @@ class JobDetailResponse(BaseModel):
     events: list[JobEventDetailResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+# DEFINE CMDB
+class ColumnSpec(BaseModel):
+    rest_name: Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")]
+    type: str = Field(..., description="one of: string, integer, boolean, datetime, text")
+    length: int | None
+    nullable: bool = True
+
+
+class MenuCreate(BaseModel):
+    rest_name: Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")]
+    columns: list[ColumnSpec]
+
+class MenuResponse(BaseModel):
+    rest_name: Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")]
+    columns: list[dict[str, str]] 
+    model_config = ConfigDict(from_attributes=True)
+
+class statusResponse(BaseModel):
+    status: str
+
+class RecordResponse(BaseModel):
+    status: str
+    uuid: str
