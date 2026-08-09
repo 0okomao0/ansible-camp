@@ -23,8 +23,10 @@ class JobModel(Base):
 
     id = Column(String(36), primary_key=True)
     playbook_name = Column(String(100), nullable=True)
-    status = Column(String(20), default="RUNNING")
-    created_at = Column(DateTime, default=datetime.datetime.now(datetime.UTC))
+    status = Column(String(20), nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    ended_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=True)
     updated_at = Column(
         DateTime,
         default=datetime.datetime.now(datetime.UTC),

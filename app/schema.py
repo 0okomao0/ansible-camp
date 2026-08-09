@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -42,3 +43,31 @@ class JobEventPayload(BaseModel):
     msg: str | None = None
     stdout: str | None = None
     stderr: str | None = None
+
+class JobEventResponse(BaseModel):
+    status: str
+    job_id: str
+
+class JobEventDetailResponse(BaseModel):
+    event_type: str
+    host: str | None
+    task: str | None
+    status: str | None
+    changed: bool
+    msg: str | None
+    stdout: str | None
+    stderr: str | None
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class JobDetailResponse(BaseModel):
+    job_id: str
+    playbook_name: str | None
+    status: str
+    created_at: datetime.datetime
+    started_at: datetime.datetime | None
+    ended_at: datetime.datetime | None
+    events: list[JobEventDetailResponse]
+
+    model_config = ConfigDict(from_attributes=True)
