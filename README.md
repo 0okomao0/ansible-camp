@@ -5,6 +5,7 @@ CMDB（構成管理データベース）とAnsible ジョブ管理を提供す�
 - WIP
     - CMDB Update
     - Ansible Job Execution
+    - Playbook EDITOR
     - GUI
 
 
@@ -24,11 +25,15 @@ git clone https://github.com/0okomao0/ansible-camp.git
 
 3. 該当ディレクトリをdevcontainerとして開く
 
-4. サーバーが起動したら、以下のURLでアクセス可能：
+4. サーバーが起動したら、下記コマンドを実行
+```
+uv run uvicorn app.main:app --reload
+```
+以下のURLでアクセス可能となる：
 
-    APIServer: http://localhost:8000/api/v1
-    Swagger UI: http://localhost:8000/docs
-    ReDoc: http://localhost:8000/redoc
+APIServer: http://localhost:8000/api/v1
+Swagger UI: http://localhost:8000/docs
+ReDoc: http://localhost:8000/redoc
 
 
 ## 主な依存関係
