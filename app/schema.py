@@ -1,7 +1,8 @@
 import datetime
 from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+import yaml
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
 # DEFINE HOST
@@ -97,3 +98,23 @@ class statusResponse(BaseModel):
 class RecordResponse(BaseModel):
     status: str
     uuid: str
+
+# DEFINE PLAYBOOK
+class PlaybookCreate(BaseModel):
+    name: str
+    description: str | None = None
+    content: str
+
+    @field_validator("content")
+    def validate_yaml(cls, v: str):
+        try:
+            yaml.safe_load(v)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML Format: {e}")
+        return v
+
+class PlaybookResponse(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    content: str

@@ -61,3 +61,20 @@ class CMDBModel(Base):
     rest_name = Column(String(100), nullable=False)
     table_name = Column(String(100), nullable=False)
     columns = Column(JSON, nullable=False)
+
+class PlaybookModel(Base):
+    __tablename__ = "playbooks"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(
+        DATETIME, 
+        default=lambda: datetime.datetime.now(datetime.UTC)
+    )
+    updated_at = Column(
+        DateTime,
+        default=datetime.datetime.now(datetime.UTC),
+        onupdate=datetime.datetime.now(datetime.UTC),
+    )
