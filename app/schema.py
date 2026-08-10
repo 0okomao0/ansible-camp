@@ -108,9 +108,12 @@ class PlaybookCreate(BaseModel):
     @field_validator("content")
     def validate_yaml(cls, v: str):
         try:
-            yaml.safe_load(v)
+            parsed = yaml.safe_load(v)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML Format: {e}")
+        if not isinstance(parsed, (dict, list)):
+            # Format Error must be raised as TypeError, But raise Value Error For FastAPI
+            raise ValueError("Invalid Playbook Format (Must Be List or Dict)")  # noqa: TRY004
         return v
 
 class PlaybookResponse(BaseModel):
@@ -118,3 +121,21 @@ class PlaybookResponse(BaseModel):
     name: str
     description: str | None = None
     content: str
+
+class PlaybookUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    content: str | None = None
+
+    @field_validator("content")
+    def validate_yaml(cls, v: str | None):
+        if v is None:
+            return v
+        try:
+            parsed = yaml.safe_load(v)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML Format: {e}")
+        if not isinstance(parsed, (dict, list)):
+            # Format Error must be raised as TypeError, But raise Value Error For FastAPI
+            raise ValueError("Invalid Playbook Format (Must Be List or Dict)")  # noqa: TRY004
+        return v

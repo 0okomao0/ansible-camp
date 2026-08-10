@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.database import DbSession
 from app.models import PlaybookModel
-from app.schema import PlaybookCreate, PlaybookResponse, RecordResponse
+from app.schema import PlaybookCreate, PlaybookUpdate, PlaybookResponse, RecordResponse
 
 router = APIRouter(prefix="/api/v1/playbooks", tags=["playbooks"])
 
@@ -32,11 +32,27 @@ def get_record(db: DbSession):
 
 @router.delete("/{uuid}", response_model=RecordResponse)
 def delete_record(uuid: str, db: DbSession):
-    record = db.query(PlaybookModel).filter(PlaybookModel.id == uuid).first()
-    if not record:
+    playbook = db.query(PlaybookModel).filter(PlaybookModel.id == uuid).first()
+    if not playbook:
         raise HTTPException(status_code=409, detail={"status": "failed", "message": "Playbook not exists"})
     
-    db.delete(record)
+    db.delete(playbook)
     db.commit()
     db.flush()
     return  {"status": "deleted", "uuid": uuid}
+
+@router.patch("/{uuid}", response_model=RecordResponse)
+def update_playbook(uuid: str, payload: PlaybookUpdate, db: DbSession):
+    playbook = db.query(PlaybookModel).filter(PlaybookModel.id == uuid).first()
+    if not playbook:
+        raise HTTPException(status_code=404, detail={"status": "failed", "message": "Playbook not exists"})
+
+    update_data = payload.model_dump(exclude_unset=True)
+    
+    for field, value in update_data.items():
+        if not field in ["id", "created_at", "updated_at"]:
+            setattr(playbook, field, value)
+
+    db.commit()
+    db.refresh(playbook)
+    return {"status": "Updated", "uuid": uuid}
