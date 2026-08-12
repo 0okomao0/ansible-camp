@@ -53,7 +53,7 @@ def list_menus(db: DbSession) -> list[CMDBModel]:
     return menus
 
 @router.post("/", response_model=statusResponse)
-def create_table(payload: MenuCreate, db: DbSession):
+def create_menu(payload: MenuCreate, db: DbSession):
     if db.query(CMDBModel).filter(CMDBModel.rest_name == payload.rest_name).first():
         raise HTTPException(status_code=409, detail={"status": "failed", "message": "Menu already exists"})
 
@@ -102,7 +102,7 @@ def create_table(payload: MenuCreate, db: DbSession):
     return {"status": "created"}
 
 @router.delete("/{rest_name}", response_model=statusResponse)
-def drop_table(rest_name: str, db: DbSession):
+def drop_menu(rest_name: str, db: DbSession):
     target_define = db.query(CMDBModel).filter(CMDBModel.rest_name == rest_name).first()
     if not target_define:
         raise HTTPException(status_code=404, detail={"status": "failed", "message": "Menu not exists"})
