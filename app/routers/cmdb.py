@@ -47,7 +47,7 @@ def _map_type(col: ColumnSpec) -> Column:
     raise ValueError(f"unsupported column type: {col.type}")
 
 @router.get("/", response_model=list[MenuResponse])
-def list_menus(db: DbSession) -> list[CMDBModel]:
+def get_menu_lists(db: DbSession) -> list[CMDBModel]:
     menus = db.query(CMDBModel).all()
     # return [row for row in menus]
     return menus

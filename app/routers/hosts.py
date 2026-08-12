@@ -17,11 +17,11 @@ def create_host(host: HostCreate, db: DbSession):
     return db_host
 
 @router.get("/hosts", response_model=list[HostResponse])
-def read_hosts(db: DbSession):
+def get_hosts(db: DbSession):
     return db.query(HostModel).all()
 
 @router.get("/inventory", response_model=AnsibleInventoryResponse)
-def get_ansible_inventory(db: DbSession) -> dict[str, Any]:
+def get_hosts_for_ansible_inventory(db: DbSession) -> dict[str, Any]:
     hosts = db.query(HostModel).all()
     inventory: dict[str, Any] = {
         "all": {"hosts": {}, "children": {}},
