@@ -22,7 +22,7 @@ class JobModel(Base):
     __tablename__ = "jobs"
 
     id = Column(String(36), primary_key=True)
-    playbook_name = Column(String(100), nullable=True)
+    playbook_id = Column(String(100), nullable=True)
     status = Column(String(20), nullable=False)
     started_at = Column(DateTime, nullable=True)
     ended_at = Column(DateTime, nullable=True)

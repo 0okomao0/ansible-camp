@@ -33,10 +33,18 @@ AnsibleInventoryResponse = dict[str, InventoryGroup | Any]
 
 
 # DEFINE JOB
+class JobExecutePayload(BaseModel):
+    playbook_id: str
+
+class JobListResponse(BaseModel):
+    id: str
+    playbook_id: str
+    status: str
+
 class JobEventPayload(BaseModel):
     job_id: str
     event_type: str
-    playbook_name: str | None = None
+    playbook_id: str | None = None
     host: str | None = None
     task: str | None = None
     status: str | None = None
@@ -64,7 +72,7 @@ class JobEventDetailResponse(BaseModel):
 
 class JobDetailResponse(BaseModel):
     job_id: str
-    playbook_name: str | None
+    playbook_id: str | None
     status: str
     created_at: datetime.datetime
     started_at: datetime.datetime | None

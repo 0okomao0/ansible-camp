@@ -1,13 +1,12 @@
 import os
 import shutil
 import subprocess
-import uuid
+import sys
 
 import ansible_runner
 import requests
 import yaml
 
-JOB_ID = str(uuid.uuid4())
 API_BASE_URL = "http://localhost:8000"
 
 def send_event_to_api(event_data: dict):
@@ -18,6 +17,15 @@ def send_event_to_api(event_data: dict):
     except Exception as e:
         print(f"Failed to send event to API: {e}")
 
+def get_jobs():
+    try:
+        res = requests.get(
+            f"{API_BASE_URL}/api/v1/jobs/ne", timeout=5
+        )
+    except Exception as e:
+        print(f"Failed to get jobs from API: {e}")
+    return res.json()
+    
 def on_ansible_event(event: dict):
     event_type = event.get("event")
     if event_type in [
@@ -38,7 +46,7 @@ def on_ansible_event(event: dict):
             status = "SKIPPED"
 
         payload = {
-            "job_id": JOB_ID,
+            "job_id": job_id,
             "event_type": event_type,
             "host": event_info.get("host"),
             "task": event_info.get("task"),
@@ -51,13 +59,13 @@ def on_ansible_event(event: dict):
 
         send_event_to_api(payload)
 
-def runner_exec():
+def runner_exec(job_id):
     res = requests.get(f"{API_BASE_URL}/api/v1/inventory")
     inventory_yaml = yaml.dump(res.json())
 
     try:
         send_event_to_api(
-            {"job_id": JOB_ID, "event_type": "job_started", "status": "RUNNING"}
+            {"job_id": job_id, "event_type": "job_started", "status": "RUNNING"}
         )
 
         r = ansible_runner.run(
@@ -73,7 +81,7 @@ def runner_exec():
 
         send_event_to_api(
             {
-                "job_id": JOB_ID,
+                "job_id": job_id,
                 "event_type": "job_finished",
                 "status": r.status,
             }
@@ -83,29 +91,35 @@ def runner_exec():
         if os.path.isdir("test/inventory"):
             shutil.rmtree("test/inventory")
 
-def builder_exec():
+def builder_exec(job_id):
     command = [
         "ansible-builder", "build",
         "--tag", "test-ee:v1.0",
         "--file", "test/builder_files/execution-environment.yml"
     ]
     send_event_to_api(
-        {"job_id": JOB_ID, "event_type": "job_prepare_started", "status": "PREPARING"}
+        {"job_id": job_id, "event_type": "job_prepare_started", "status": "PREPARING"}
     )
     result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode == 0:
         send_event_to_api(
-            {"job_id": JOB_ID, "event_type": "job_prepare_finished", "status": "PREPARED", "stdout": result.stdout, "stderr": result.stderr}
+            {"job_id": job_id, "event_type": "job_prepare_finished", "status": "PREPARED", "stdout": result.stdout, "stderr": result.stderr}
         )
     else:
         send_event_to_api(
-            {"job_id": JOB_ID, "event_type": "job_prepare_finished", "status": "FAILED", "stdout": result.stdout, "stderr": result.stderr}
+            {"job_id": job_id, "event_type": "job_prepare_finished", "status": "FAILED", "stdout": result.stdout, "stderr": result.stderr}
         )
     return result.returncode
 
-
 if __name__ == "__main__":
-    print(f"{JOB_ID=}")
-    builder_rc = builder_exec()
-    if builder_rc == 0:
-        runner_exec()
+    jobs = get_jobs()
+    if len(jobs) > 0:
+        for item in jobs:
+            job_id = item["id"]
+            pb_id = item["playbook_id"]
+            builder_rc = builder_exec(job_id)
+            if builder_rc == 0:
+                runner_exec(job_id)
+            else:
+                sys.exit(1)
+    sys.exit(0)

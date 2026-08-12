@@ -1,26 +1,54 @@
 import datetime
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
 from app.database import DbSession
-from app.models import JobEventModel, JobModel
-from app.schema import JobDetailResponse, JobEventPayload, JobEventResponse
+from app.models import JobEventModel, JobModel, PlaybookModel
+from app.schema import (
+    JobDetailResponse,
+    JobEventPayload,
+    JobEventResponse,
+    JobExecutePayload,
+    JobListResponse,
+)
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
+
+@router.post("/execute", response_model=JobEventResponse)
+def execute_job(payload: JobExecutePayload, db: DbSession):
+    playbook = db.query(PlaybookModel).filter(PlaybookModel.id == payload.playbook_id).first()
+    if not playbook:
+        raise HTTPException(status_code=404, detail={"status": "failed", "message": "Playbook not exists"})
+    
+    new_uuid = str(uuid.uuid4())
+    job = JobModel(
+        id = new_uuid,
+        playbook_id = playbook.id,
+        status="NOTEXECUTED",
+        created_at = datetime.datetime.now(datetime.UTC)
+    )
+    db.add(job)
+    db.commit()
+    db.flush()
+    return {"status": "success", "job_id": new_uuid}
+
+@router.get("/", response_model=list[JobListResponse])
+def get_jobs(db: DbSession):
+    jobs = db.query(JobModel).all()
+    return jobs
+
+@router.get("/ne", response_model=list[JobListResponse])
+def get_jobs_not_executed(db: DbSession):
+    jobs = db.query(JobModel).filter(JobModel.status == "NOTEXECUTED").all()
+    return jobs
 
 @router.post("/events", response_model=JobEventResponse)
 def receive_job_event(payload: JobEventPayload, db: DbSession):
     job = db.query(JobModel).filter(JobModel.id == payload.job_id).first()
     if not job:
-        job = JobModel(
-            id=payload.job_id,
-            playbook_name=payload.playbook_name or "unknown",
-            status="PREPARING",
-            created_at = datetime.datetime.now(datetime.UTC)
-        )
-        db.add(job)
-        db.flush()
+        raise HTTPException(status_code=404, detail="Job not found")
 
     if payload.event_type == "job_started":
         job.status = payload.status
@@ -57,7 +85,7 @@ def get_job_detail(job_id: str, db: DbSession) -> dict[str, Any]:
 
     return JobDetailResponse(
             job_id=job.id,
-            playbook_name=job.playbook_name,
+            playbook_id=job.playbook_id,
             status=job.status,
             started_at=job.started_at,
             ended_at=job.ended_at,
