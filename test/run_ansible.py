@@ -1,13 +1,14 @@
 import os
 import shutil
 import subprocess
-import sys
+import time
 
 import ansible_runner
 import requests
 import yaml
 
 API_BASE_URL = "http://localhost:8000"
+POLL_INTERVAL = 5
 
 def send_event_to_api(event_data: dict):
     try:
@@ -20,10 +21,11 @@ def send_event_to_api(event_data: dict):
 def get_jobs():
     try:
         res = requests.get(
-            f"{API_BASE_URL}/api/v1/jobs/ne", timeout=5
+            f"{API_BASE_URL}/api/v1/jobs/ne?job_count=1", timeout=5
         )
     except Exception as e:
         print(f"Failed to get jobs from API: {e}")
+        return []
     return res.json()
     
 def on_ansible_event(event: dict):
@@ -68,8 +70,9 @@ def runner_exec(job_id):
             {"job_id": job_id, "event_type": "job_started", "status": "RUNNING"}
         )
 
+        print(f'{os.path.join(os.getenv("HOST_WORKSPACE"), "test/runner_files")}')
         r = ansible_runner.run(
-            private_data_dir="test/runner_files",
+            private_data_dir=os.path.join(os.getenv("HOST_WORKSPACE"), "test/runner_files"),
             playbook="ping.yml",
             inventory=inventory_yaml,
             # verbosity=3,
@@ -101,6 +104,7 @@ def builder_exec(job_id):
         {"job_id": job_id, "event_type": "job_prepare_started", "status": "PREPARING"}
     )
     result = subprocess.run(command, capture_output=True, text=True, check=False)
+    print(f"{result=}")
     if result.returncode == 0:
         send_event_to_api(
             {"job_id": job_id, "event_type": "job_prepare_finished", "status": "PREPARED", "stdout": result.stdout, "stderr": result.stderr}
@@ -111,15 +115,28 @@ def builder_exec(job_id):
         )
     return result.returncode
 
+def process_job(job_id):
+    print(f"[{job_id}] process_job stated.")
+    builder_rc = builder_exec(job_id)
+    if builder_rc != 0:
+        print(f"[{job_id}] ansible-builder exited non-zero code: {builder_rc}")
+        return
+
+    runner_exec(job_id)
+
+def worker_loop():
+    print("Worker started.")
+    while True:
+        print(f"Polling for jobs... INTERVAL: {POLL_INTERVAL}s")
+        jobs = []
+        jobs = get_jobs()
+        if len(jobs) > 0:
+            for job in jobs:
+                global job_id
+                job_id = job["id"]
+                process_job(job_id)
+        else:
+            time.sleep(POLL_INTERVAL)
+
 if __name__ == "__main__":
-    jobs = get_jobs()
-    if len(jobs) > 0:
-        for item in jobs:
-            job_id = item["id"]
-            pb_id = item["playbook_id"]
-            builder_rc = builder_exec(job_id)
-            if builder_rc == 0:
-                runner_exec(job_id)
-            else:
-                sys.exit(1)
-    sys.exit(0)
+    worker_loop()
