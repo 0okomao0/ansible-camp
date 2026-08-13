@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -40,8 +40,14 @@ def get_jobs(db: DbSession):
     return jobs
 
 @router.get("/ne", response_model=list[JobListResponse])
-def get_jobs_not_executed(db: DbSession):
-    jobs = db.query(JobModel).filter(JobModel.status == "NOTEXECUTED").all()
+def get_jobs_not_executed(db: DbSession, job_count: int | None = None):
+    query = db.query(JobModel).filter(JobModel.status == "NOTEXECUTED").order_by(JobModel.created_at.asc())
+    if job_count is not None:
+        query = query.limit(job_count)
+    jobs = query.all()
+    for job in jobs:
+        job.status = "PENDING"
+    db.commit()
     return jobs
 
 @router.post("/events", response_model=JobEventResponse)
@@ -61,6 +67,8 @@ def receive_job_event(payload: JobEventPayload, db: DbSession):
         job.ended_at = datetime.datetime.now(datetime.UTC)
     elif payload.event_type == "job_prepare_finished":
         job.status = payload.status
+        if payload.status == "FAILED":
+            job.ended_at = datetime.datetime.now(datetime.UTC)
 
     job_event = JobEventModel(
         job_id=payload.job_id,
