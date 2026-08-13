@@ -86,10 +86,18 @@ def runner_exec(job_id):
             {
                 "job_id": job_id,
                 "event_type": "job_finished",
-                "status": r.status,
+                "status": r.status.upper(),
             }
         )
-
+    except Exception as e:  # noqa: BLE001
+        send_event_to_api(
+            {
+                "job_id": job_id,
+                "event_type": "job_finished",
+                "status": "FAILED",
+                "stderr": str(e),
+            }
+        )
     finally:
         if os.path.isdir("test/inventory"):
             shutil.rmtree("test/inventory")
