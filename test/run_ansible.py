@@ -15,7 +15,7 @@ def send_event_to_api(event_data: dict):
         requests.post(
             f"{API_BASE_URL}/api/v1/jobs/events", json=event_data, timeout=5
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Failed to send event to API: {e}")
 
 def get_jobs():
@@ -23,7 +23,7 @@ def get_jobs():
         res = requests.get(
             f"{API_BASE_URL}/api/v1/jobs/ne?job_count=1", timeout=5
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Failed to get jobs from API: {e}")
         return []
     return res.json()

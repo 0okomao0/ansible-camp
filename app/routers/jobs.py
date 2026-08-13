@@ -56,6 +56,7 @@ def receive_job_event(payload: JobEventPayload, db: DbSession):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    payload.status = payload.status.upper()
     if payload.event_type == "job_started":
         job.status = payload.status
         if job.started_at is None:
