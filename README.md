@@ -3,9 +3,8 @@
 CMDB（構成管理データベース）とAnsible ジョブ管理を提供する、FastAPI ベースの API サーバー
 
 - WIP
-    - CMDB Update
-    - Ansible Job Execution
-    - Playbook EDITOR
+    - CMDB & Playbook (Update)
+    - Ansible Job Execution (Cancel)
     - GUI
 
 
@@ -37,11 +36,12 @@ ReDoc: http://localhost:8000/redoc
 
 
 ## 主な依存関係
-    fastapi - Webフレームワーク
-    uvicorn - ASGIサーバー
-    ansible-core - Ansible コアライブラリ
-    ansible-runner - Ansible実行エンジン
-    sqlalchemy - ORM
-    pydantic - データバリデーション
+    fastapi
+    uvicorn
+    ansible-core
+    ansible-builder
+    ansible-runner
+    sqlalchemy
+    pydantic
 
 完全な依存関係は pyproject.toml を参照のこと

@@ -1,5 +1,5 @@
 {
-  "name": "CMDB Development Environment",
+  "name": "ansible-camp devcontainer",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
